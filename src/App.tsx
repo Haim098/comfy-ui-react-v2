@@ -1111,7 +1111,7 @@ function AppContent() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              ✨ ComfyUI - ממשק אינטראקטיבי
+              ✨יצירת תמונות משטרה
             </Typography>
             <Chip
               icon={mode === 'create' ? <AddIcon /> : mode === 'edit' ? <EditIcon /> : <HistoryIcon />}
