@@ -34,12 +34,14 @@ import { useHistory } from '../contexts/HistoryContext';
 interface ImageGalleryProps {
   onImageSelect: (item: ImageHistoryItem) => void;
   onEditImage: (item: ImageHistoryItem) => void;
+  onImageClick?: (imageUrl: string) => void;
   currentImageUrl?: string;
 }
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({ 
   onImageSelect, 
   onEditImage, 
+  onImageClick,
   currentImageUrl 
 }) => {
   const { history, loading, removeFromHistory, clearHistory, loadHistoryFromServer } = useHistory();
@@ -57,13 +59,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     });
   }, [history, searchTerm, modeFilter]);
 
-  const handleDownload = (item: ImageHistoryItem) => {
-    const link = document.createElement('a');
-    link.href = item.url;
-    link.download = item.filename || `generated-image-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (item: ImageHistoryItem) => {
+    try {
+      const response = await fetch(item.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = item.filename || `generated-image-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
   };
 
   const handleDuplicate = (item: ImageHistoryItem) => {
@@ -291,8 +301,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   height="200"
                   image={item.url}
                   alt={`תמונה ${index + 1}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onImageClick?.(item.url);
+                  }}
                   sx={{ 
                     objectFit: 'cover',
+                    cursor: 'pointer',
                     transition: 'transform 0.3s ease',
                     '&:hover': {
                       transform: 'scale(1.05)'

@@ -30,6 +30,7 @@ import {
   CssBaseline,
   Tabs,
   Tab,
+  Dialog,
 } from "@mui/material";
 
 import {
@@ -134,6 +135,7 @@ function AppContent() {
   const [snack, setSnack] = useState<SnackMessage | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
   // History state is now managed by HistoryContext
   
   const wsRef = useRef<WebSocket | null>(null);
@@ -1371,6 +1373,7 @@ function AppContent() {
                           setSnack({ type: "error", msg: "שגיאה בהכנת התמונה לעריכה" });
                         });
                     }}
+                    onImageClick={(imageUrl) => setModalImage(imageUrl)}
                     currentImageUrl={image || undefined}
                   />
                 )}
@@ -1433,20 +1436,34 @@ function AppContent() {
                 {image ? (
                   <Card elevation={0} sx={{ background: 'transparent' }}>
                     <Box textAlign="center" p={2}>
-                      <ImagePreview src={image} alt="Generated output" />
+                      <ImagePreview 
+                        src={image} 
+                        alt="Generated output" 
+                        onClick={() => setModalImage(image)}
+                        style={{ cursor: 'pointer' }}
+                      />
                     </Box>
                     <CardActions sx={{ justifyContent: 'center', gap: 1 }}>
                       <Button
                         variant="contained"
                         startIcon={<DownloadIcon />}
-                        onClick={() => {
+                        onClick={async () => {
                           if (image) {
-                            const link = document.createElement('a');
-                            link.href = image;
-                            link.download = `generated-image-${Date.now()}.png`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            try {
+                              const response = await fetch(image);
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `generated-image-${Date.now()}.png`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+                            } catch (error) {
+                              console.error('Error downloading image:', error);
+                              setSnack({ type: "error", msg: "שגיאה בהורדת התמונה" });
+                            }
                           }
                         }}
                         color="primary"
@@ -1524,6 +1541,62 @@ function AppContent() {
             {snack?.msg}
           </Alert>
         </Snackbar>
+
+        {/* Image Modal for enlarged view */}
+        <Dialog
+          open={Boolean(modalImage)}
+          onClose={() => setModalImage(null)}
+          maxWidth="lg"
+          fullWidth
+          sx={{
+            '& .MuiDialog-paper': {
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+              overflow: 'visible'
+            }
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '80vh',
+              p: 2
+            }}
+          >
+            <IconButton
+              onClick={() => setModalImage(null)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                zIndex: 2,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(0,0,0,0.9)'
+                }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+            {modalImage && (
+              <img
+                src={modalImage}
+                alt="Enlarged view"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '90vh',
+                  objectFit: 'contain',
+                  borderRadius: 8,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                }}
+              />
+            )}
+          </Box>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );
