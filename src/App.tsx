@@ -20,10 +20,6 @@ import {
   AppBar,
   Toolbar,
   Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Divider,
   ThemeProvider,
   createTheme,
@@ -52,8 +48,7 @@ import axios from "axios";
 
 // Import new components and types
 import { HistoryProvider, useHistory } from "./contexts/HistoryContext";
-import ImageGallery from "./components/ImageGallery";
-import type { ImageHistoryItem, SnackMessage, WorkflowMode } from "./types";
+import type { SnackMessage, WorkflowMode } from "./types";
 
 // Dynamic API URL - works locally and on network
 const API = window.location.hostname === 'localhost' 
@@ -104,7 +99,7 @@ function AppContent() {
   const [mode, setMode] = useState<WorkflowMode>('create');
   
   // Use the history context
-  const { addToHistory } = useHistory();
+  const { addToHistory, history, loading: historyLoading } = useHistory();
   
   // Create mode states
   const [prompt, setPrompt] = useState("Half-body selfie of a man with glasses, wearing a white polo shirt. The image is taken with a smartphone using direct camera flash, creating harsh frontal lighting, sharp shadows, and a slightly overexposed look typical of flash photography");
@@ -861,108 +856,6 @@ function AppContent() {
     }
   };
 
-  // History drawer component
-  const HistoryDrawerContent = ({ onImageSelect, onHistoryTabClick, currentImageUrl }: {
-    onImageSelect: (item: ImageHistoryItem) => void;
-    onHistoryTabClick: () => void;
-    currentImageUrl?: string;
-  }) => {
-    const { history, loading, clearHistory, loadHistoryFromServer } = useHistory();
-    
-    return (
-      <>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-          <Typography variant="h6">
-            היסטוריה ({history.length})
-          </Typography>
-          <Box>
-            <Tooltip title="רענן היסטוריה מהשרת">
-              <IconButton 
-                size="small" 
-                onClick={loadHistoryFromServer}
-                disabled={loading}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {history.length > 0 && (
-              <Tooltip title="נקה היסטוריה">
-                <IconButton 
-                  size="small" 
-                  onClick={() => {
-                    clearHistory();
-                    setSnack({ type: "info", msg: "ההיסטוריה נוקתה" });
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
-        {loading ? (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <LinearProgress sx={{ mb: 2 }} />
-            <Typography variant="body2" color="text.secondary">
-              טוען היסטוריה מהשרת...
-            </Typography>
-          </Box>
-        ) : history.length === 0 ? (
-          <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
-            <ImageIcon sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2">
-              אין תמונות בהיסטוריה
-            </Typography>
-            <Typography variant="caption" display="block" mt={1}>
-              לחץ על רענון לטעינה מהשרת
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            <List>
-              {history.slice(0, 5).map((item, index) => (
-                <ListItem 
-                  key={index} 
-                  component="div" 
-                  onClick={() => onImageSelect(item)} 
-                  sx={{ 
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                      borderRadius: 1
-                    }
-                  }}
-                >
-                  <ListItemIcon>
-                    <ImageIcon color={currentImageUrl === item.url ? 'primary' : 'inherit'} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.prompt.length > 20 ? `${item.prompt.substring(0, 20)}...` : item.prompt}
-                    secondary={new Date(item.timestamp).toLocaleDateString('he-IL')}
-                  />
-                </ListItem>
-              ))}
-            </List>
-            {history.length > 5 && (
-              <Box sx={{ p: 1, textAlign: 'center' }}>
-                <Typography variant="caption" color="text.secondary">
-                  ועוד {history.length - 5} תמונות...
-                </Typography>
-                <Button 
-                  size="small" 
-                  onClick={onHistoryTabClick}
-                  sx={{ display: 'block', mx: 'auto', mt: 1 }}
-                >
-                  צפה בכל ההיסטוריה
-                </Button>
-              </Box>
-            )}
-          </>
-        )}
-      </>
-    );
-  };
-
   const drawerContent = (
     <Box sx={{ width: 280, p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -1192,14 +1085,14 @@ function AppContent() {
       
       <Divider sx={{ my: 2 }} />
       
-      <HistoryDrawerContent 
-        onImageSelect={(item) => {
-          setImage(item.url);
-          setSnack({ type: "info", msg: `הוחזרה תמונה מההיסטוריה` });
-        }}
-        onHistoryTabClick={() => setMode('history')}
-        currentImageUrl={image || undefined}
-      />
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          היסטוריה מוצגת עכשיו בצד ימין 
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          כל התמונות שלך מופיעות בסיידבאר הימני של המסך
+        </Typography>
+      </Box>
     </Box>
   );
 
@@ -1244,9 +1137,10 @@ function AppContent() {
           {drawerContent}
         </Drawer>
 
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box display="flex" gap={4} flexDirection={{ xs: 'column', md: 'row' }}>
-            <Box flex={1}>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <Box display="flex" gap={2} flexDirection={{ xs: 'column', lg: 'row' }}>
+            {/* Left Column - Main Content */}
+            <Box flex={1} maxWidth={{ lg: '60%' }}>
               <StyledPaper>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
                   <Tabs 
@@ -1266,12 +1160,6 @@ function AppContent() {
                       value="edit"
                       sx={{ minHeight: 64 }}
                     />
-                    <Tab 
-                      icon={<HistoryIcon />} 
-                      label="היסטוריה" 
-                      value="history"
-                      sx={{ minHeight: 64 }}
-                    />
                   </Tabs>
                 </Box>
 
@@ -1289,7 +1177,7 @@ function AppContent() {
                       sx={{ mb: 3 }}
                     />
                   </>
-                ) : mode === 'edit' ? (
+                ) : (
                   <>
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="h6" gutterBottom>
@@ -1346,63 +1234,31 @@ function AppContent() {
                       placeholder="למשל: הוסף כובע, שנה צבע השיער, הוסף משקפיים..."
                     />
                   </>
-                ) : (
-                  // History tab content
-                  <ImageGallery
-                    onImageSelect={(item) => {
-                      setImage(item.url);
-                      setSnack({ type: "info", msg: `נבחרה תמונה מההיסטוריה` });
-                    }}
-                    onEditImage={(item) => {
-                      setMode('edit');
-                      setEditPrompt(item.editPrompt || 'Edit this image');
-                      setEditSeed(item.seed);
-                      setEditSteps(item.steps);
-                      setEditGuidance(item.guidance);
-                      
-                      // Convert image URL to File for editing
-                      fetch(item.url)
-                        .then(res => res.blob())
-                        .then(blob => {
-                          const file = new File([blob], item.filename, { type: 'image/png' });
-                          setInputImage(file);
-                          setInputImagePreview(item.url);
-                        })
-                        .catch(err => {
-                          console.error('Error converting image for editing:', err);
-                          setSnack({ type: "error", msg: "שגיאה בהכנת התמונה לעריכה" });
-                        });
-                    }}
-                    onImageClick={(imageUrl) => setModalImage(imageUrl)}
-                    currentImageUrl={image || undefined}
-                  />
                 )}
                 
-                {mode !== 'history' && (
-                  <Box display="flex" gap={2} justifyContent="center">
-                    {!loading ? (
-                      <GenerateButton
-                        variant="contained"
-                        size="large"
-                        onClick={handleGenerate}
-                        startIcon={mode === 'create' ? <AddIcon /> : <EditIcon />}
-                        disabled={mode === 'edit' && !inputImage}
-                      >
-                        {mode === 'create' ? 'צור תמונה' : 'ערוך תמונה'}
-                      </GenerateButton>
-                    ) : (
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={handleStop}
-                        startIcon={<StopIcon />}
-                        color="error"
-                      >
-                        עצור
-                      </Button>
-                    )}
-                  </Box>
-                )}
+                <Box display="flex" gap={2} justifyContent="center">
+                  {!loading ? (
+                    <GenerateButton
+                      variant="contained"
+                      size="large"
+                      onClick={handleGenerate}
+                      startIcon={mode === 'create' ? <AddIcon /> : <EditIcon />}
+                      disabled={mode === 'edit' && !inputImage}
+                    >
+                      {mode === 'create' ? 'צור תמונה' : 'ערוך תמונה'}
+                    </GenerateButton>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={handleStop}
+                      startIcon={<StopIcon />}
+                      color="error"
+                    >
+                      עצור
+                    </Button>
+                  )}
+                </Box>
                 
                 {loading && (
                   <Box mt={3}>
@@ -1522,6 +1378,197 @@ function AppContent() {
                     </Typography>
                   </Box>
                 )}
+              </StyledPaper>
+            </Box>
+            
+            {/* Right Sidebar - Image Gallery */}
+            <Box 
+              width={{ xs: '100%', lg: '300px' }}
+              flexShrink={0}
+              sx={{ 
+                position: { lg: 'sticky' },
+                top: { lg: '100px' },
+                height: { lg: 'fit-content' },
+                maxHeight: { lg: '500px' }
+              }}
+            >
+              <StyledPaper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ImageIcon color="primary" />
+                    גלריית תמונות ({history.length})
+                  </Typography>
+                </Box>
+                
+                <Box 
+                  sx={{ 
+                    flex: 1,
+                    p: 1
+                  }}
+                >
+                  {historyLoading ? (
+                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                      <LinearProgress sx={{ mb: 1 }} />
+                      <Typography variant="caption" color="text.secondary">
+                        טוען תמונות...
+                      </Typography>
+                    </Box>
+                  ) : history.length === 0 ? (
+                    <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+                      <ImageIcon sx={{ fontSize: 40, mb: 1, opacity: 0.5 }} />
+                      <Typography variant="body2">
+                        אין תמונות בהיסטוריה
+                      </Typography>
+                      <Typography variant="caption" display="block" mt={1}>
+                        צור תמונה ראשונה כדי להתחיל
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box 
+                      sx={{ 
+                        display: 'grid',
+                        gap: 1,
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        maxHeight: '300px',
+                        overflowY: 'auto',
+                        pr: 0.5,
+                        '&::-webkit-scrollbar': {
+                          width: '4px'
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          background: 'transparent'
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: 'rgba(99, 102, 241, 0.4)',
+                          borderRadius: '2px'
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                          background: 'rgba(99, 102, 241, 0.6)'
+                        }
+                      }}
+                    >
+                      {history.slice(0, 20).map((item, index) => (
+                        <Box
+                          key={`${item.url}-${index}`}
+                          sx={{
+                            position: 'relative',
+                            aspectRatio: '1',
+                            border: image === item.url ? 2 : 1,
+                            borderColor: image === item.url ? 'primary.main' : 'divider',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'scale(1.05)',
+                              borderColor: 'primary.light'
+                            }
+                          }}
+                          onClick={() => {
+                            setImage(item.url);
+                            setSnack({ type: "info", msg: `נבחרה תמונה מההיסטוריה` });
+                          }}
+                        >
+                          <img
+                            src={item.url}
+                            alt={`תמונה ${index + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalImage(item.url);
+                            }}
+                          />
+                          
+                          {/* Overlay with action buttons */}
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              display: 'flex',
+                              gap: 0.5,
+                              opacity: 0,
+                              transition: 'opacity 0.3s ease',
+                              '.MuiBox-root:hover &': {
+                                opacity: 1
+                              }
+                            }}
+                          >
+                            <Tooltip title="ערוך">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMode('edit');
+                                  setEditPrompt(item.editPrompt || 'Edit this image');
+                                  setEditSeed(item.seed);
+                                  setEditSteps(item.steps);
+                                  setEditGuidance(item.guidance);
+                                  
+                                  // Convert image URL to File for editing
+                                  fetch(item.url)
+                                    .then(res => res.blob())
+                                    .then(blob => {
+                                      const file = new File([blob], item.filename, { type: 'image/png' });
+                                      setInputImage(file);
+                                      setInputImagePreview(item.url);
+                                    })
+                                    .catch(err => {
+                                      console.error('Error converting image for editing:', err);
+                                      setSnack({ type: "error", msg: "שגיאה בהכנת התמונה לעריכה" });
+                                    });
+                                }}
+                                sx={{ 
+                                  bgcolor: 'rgba(0,0,0,0.7)', 
+                                  color: 'white',
+                                  '&:hover': { bgcolor: 'rgba(0,0,0,0.9)' },
+                                  width: 20,
+                                  height: 20
+                                }}
+                              >
+                                <EditIcon sx={{ fontSize: 12 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          
+                          {/* Image info overlay */}
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                              color: 'white',
+                              p: 0.5,
+                              opacity: 0,
+                              transition: 'opacity 0.3s ease',
+                              '.MuiBox-root:hover &': {
+                                opacity: 1
+                              }
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
+                              {item.mode === 'create' ? 'יצירה' : 'עריכה'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                      
+                      {history.length > 20 && (
+                        <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', p: 1 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            ועוד {history.length - 20} תמונות...
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+                </Box>
               </StyledPaper>
             </Box>
           </Box>

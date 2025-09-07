@@ -19,7 +19,7 @@ export interface SnackMessage {
   msg: string;
 }
 
-export type WorkflowMode = 'create' | 'edit' | 'history';
+export type WorkflowMode = 'create' | 'edit';
 
 export interface HistoryContextType {
   history: ImageHistoryItem[];
