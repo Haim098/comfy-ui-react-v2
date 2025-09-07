@@ -807,6 +807,14 @@ function AppContent() {
               setProgress(1);
               const actionText = mode === 'create' ? 'נוצרה' : 'נערכה';
               setSnack({ type: "success", msg: `תמונה ${actionText} בהצלחה! נשמרה בהיסטוריה 📚` });
+              
+              // Generate new random seed for next creation
+              if (mode === 'create') {
+                setSeed(Math.floor(Math.random() * 1000000000000000));
+              } else {
+                setEditSeed(Math.floor(Math.random() * 1000000000000000));
+              }
+              
               pollingRef.current.isPolling = false; // Stop polling
               return;
             }
