@@ -886,6 +886,107 @@ function AppContent() {
       />
       
       <Box mt={3}>
+        <Typography variant="h6" gutterBottom>
+          גודל תמונה
+        </Typography>
+        
+        {/* Social Media Presets */}
+        <Box mb={2}>
+          <Typography variant="body2" gutterBottom color="text.secondary">
+            הגדלים מומלצים לרשתות חברתיות:
+          </Typography>
+          <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+            <Button
+              size="small"
+              variant={width === 1080 && height === 1080 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1080);
+                setHeight(1080);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              📷 Instagram Post (1:1)
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1080 && height === 1350 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1080);
+                setHeight(1350);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              📱 Instagram Story (4:5)
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1920 && height === 1080 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1920);
+                setHeight(1080);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              🎥 YouTube (16:9)
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1200 && height === 630 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1200);
+                setHeight(630);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              🐦 Twitter/X Header
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1584 && height === 396 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1584);
+                setHeight(396);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              💼 LinkedIn Banner
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1200 && height === 1200 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1200);
+                setHeight(1200);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              💬 WhatsApp DP
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1024 && height === 1024 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1024);
+                setHeight(1024);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              🎨 Standard Square
+            </Button>
+            <Button
+              size="small"
+              variant={width === 1616 && height === 1088 ? "contained" : "outlined"}
+              onClick={() => {
+                setWidth(1616);
+                setHeight(1088);
+              }}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              🖥️ Desktop Wallpaper
+            </Button>
+          </Box>
+        </Box>
+        
         <Typography gutterBottom>רוחב: {width}px</Typography>
         <Slider
           value={width}
